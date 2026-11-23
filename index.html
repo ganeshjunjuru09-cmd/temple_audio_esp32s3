@@ -1,0 +1,1319 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Temple Audio Control Center</title>
+
+<style>
+:root {
+  --bg:#0b1020;
+  --panel:#141c30;
+  --panel2:#1b2740;
+  --line:#293750;
+  --text:#edf2ff;
+  --muted:#94a3b8;
+  --accent:#7c9cff;
+  --green:#35c98b;
+  --red:#f16d78;
+  --yellow:#f2bd62;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:Inter,Segoe UI,Arial,sans-serif;
+}
+button,input,select,textarea{font:inherit}
+button{
+  cursor:pointer;border:1px solid var(--line);border-radius:9px;
+  padding:9px 13px;background:var(--panel2);color:var(--text)
+}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:#081126;border-color:var(--accent);font-weight:700}
+button.danger{color:var(--red)}
+button.small{padding:5px 9px;font-size:12px}
+input,select,textarea{
+  width:100%;background:#0c1426;color:var(--text);
+  border:1px solid var(--line);border-radius:8px;padding:10px;
+  outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{min-height:100px;resize:vertical}
+label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+h1,h2,h3,h4{margin-top:0}
+small,.muted{color:var(--muted)}
+.app{display:flex;min-height:100vh}
+.sidebar{
+  width:245px;background:#10182a;border-right:1px solid var(--line);
+  padding:20px 13px;flex-shrink:0;display:flex;flex-direction:column;
+}
+.brand{font-size:18px;font-weight:800;padding:8px 10px 22px}
+.brand span{color:var(--accent)}
+.nav-label{font-size:10px;letter-spacing:1.5px;color:#71809b;padding:15px 10px 7px}
+.nav button{
+  width:100%;text-align:left;background:transparent;border:0;
+  padding:11px 12px;margin:2px 0;color:#aebbd0;
+}
+.nav button.active,.nav button:hover{
+  background:#202e4b;color:white;border-radius:8px;
+}
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--line);padding:15px 8px}
+.main{flex:1;min-width:0}
+.topbar{
+  min-height:68px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 25px;gap:12px;
+}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--red)}
+.status-dot.online{background:var(--green)}
+.content{padding:25px;max-width:1500px;margin:auto}
+.page{display:none}
+.page.active{display:block}
+.page-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}
+.page-head p{color:var(--muted);margin:5px 0}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:13px;padding:17px;min-width:0;
+}
+.card h3{font-size:14px;margin-bottom:13px}
+.stat{font-size:27px;font-weight:800;margin:8px 0}
+.stat-label{font-size:12px;color:var(--muted)}
+.section{margin-top:20px}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.field{margin-bottom:14px}
+.field-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.badge{
+  display:inline-block;padding:4px 8px;border-radius:20px;
+  background:#263550;color:#cbd8f2;font-size:11px;
+}
+.badge.green{background:#123c31;color:#72e4b5}
+.badge.red{background:#49252e;color:#ff9ca5}
+.badge.yellow{background:#49391f;color:#f7d18a}
+.badge.blue{background:#243a65;color:#b6caff}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);font-size:13px}
+th{color:var(--muted);font-weight:600;background:#111a2c}
+tr:last-child td{border-bottom:0}
+.api-path{font-family:Consolas,monospace;color:#b8caff;font-size:12px}
+.api-list{display:grid;gap:9px}
+.api-item{
+  border:1px solid var(--line);border-radius:10px;background:var(--panel);
+  padding:13px;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;cursor:pointer;
+}
+.api-item:hover{border-color:var(--accent)}
+.api-main{min-width:0}
+.api-main strong{display:block;font-size:13px;margin-bottom:6px}
+.api-main .api-path{overflow-wrap:anywhere}
+.api-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
+.api-tools input{flex:1;min-width:180px}
+.method{
+  min-width:58px;text-align:center;font-size:10px;font-weight:800;
+  padding:5px 7px;border-radius:5px;
+}
+.GET{background:#143c30;color:#7ce0b2}
+.POST{background:#263c65;color:#b8caff}
+.PUT{background:#4b3a1c;color:#f5d18b}
+.DELETE{background:#49242e;color:#ff9da8}
+.modal-backdrop{
+  position:fixed;inset:0;background:#020617cc;z-index:20;
+  display:none;align-items:center;justify-content:center;padding:15px;
+}
+.modal-backdrop.open{display:flex}
+.modal{
+  background:#131d31;border:1px solid var(--line);border-radius:14px;
+  width:min(850px,100%);max-height:92vh;overflow:auto;padding:22px;
+}
+.modal-head{display:flex;justify-content:space-between;gap:15px;align-items:start}
+.modal-section{margin-top:18px}
+.modal-section h4{font-size:13px;color:#c6d3eb;margin-bottom:8px}
+pre{
+  white-space:pre-wrap;overflow-wrap:anywhere;background:#091222;
+  border:1px solid var(--line);border-radius:8px;padding:13px;
+  color:#b9d0ff;font-size:12px;max-height:260px;overflow:auto;
+}
+.empty{padding:25px;text-align:center;color:var(--muted)}
+.audio-item{
+  display:flex;align-items:center;gap:10px;background:#101a2c;
+  border:1px solid var(--line);padding:11px;border-radius:9px;margin:8px 0;
+}
+.audio-item.dragging{opacity:.4}
+.audio-item .audio-name{flex:1;min-width:0;overflow-wrap:anywhere}
+.drag-handle{color:var(--muted);cursor:grab;font-size:18px}
+.audio-number{width:25px;height:25px;border-radius:50%;background:#293a5c;display:grid;place-items:center;font-size:12px}
+.toast{
+  position:fixed;bottom:20px;right:20px;background:#243451;
+  border:1px solid var(--line);border-radius:9px;padding:13px 17px;
+  z-index:40;display:none;max-width:90vw;
+}
+.toast.show{display:block}
+.mobile-menu{display:none}
+hr{border:0;border-top:1px solid var(--line);margin:17px 0}
+@media(max-width:950px){
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sidebar{width:210px}
+}
+@media(max-width:680px){
+  .app{display:block}
+  .sidebar{
+    position:fixed;z-index:15;left:-260px;top:0;bottom:0;
+    transition:left .2s;width:245px;
+  }
+  .sidebar.open{left:0}
+  .mobile-menu{display:inline-block}
+  .content{padding:16px}
+  .topbar{padding:12px 15px}
+  .grid,.grid.two,.field-row{grid-template-columns:1fr}
+  .page-head{align-items:flex-start;flex-direction:column}
+  .topbar-right .connection-label{display:none}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<aside class="sidebar" id="sidebar">
+  <div class="brand">TEMPLE <span>AUDIO</span></div>
+  <nav class="nav">
+    <div class="nav-label">MAIN</div>
+    <button class="active" data-page="overview">▦ &nbsp; Overview</button>
+    <button data-page="player">♫ &nbsp; Audio Player</button>
+    <button data-page="files">▤ &nbsp; SD Card Files</button>
+    <button data-page="playlists">☷ &nbsp; Playlists</button>
+
+    <div class="nav-label">AUTOMATION</div>
+    <button data-page="schedules">◷ &nbsp; Schedules</button>
+    <button data-page="prayers">☀ &nbsp; Prayer Timings</button>
+    <button data-page="scheduler">◉ &nbsp; Scheduler Monitor</button>
+
+    <div class="nav-label">DEVICE</div>
+    <button data-page="amplifier">♫ &nbsp; Amplifier</button>
+    <button data-page="display">▣ &nbsp; LCD Display</button>
+    <button data-page="network">⌁ &nbsp; Network</button>
+    <button data-page="diagnostics">⚙ &nbsp; Diagnostics</button>
+    <button data-page="logs">≡ &nbsp; Logs & Alerts</button>
+    <button data-page="backup">▣ &nbsp; Backup & Restore</button>
+
+    <div class="nav-label">DEVELOPER</div>
+    <button data-page="api">⌘ &nbsp; API Documentation</button>
+    <button data-page="settings">⚙ &nbsp; Settings</button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="muted" style="font-size:11px">TEMPLE AUDIO SYSTEM</div>
+    <div style="font-size:12px;margin-top:6px">Dashboard v1.0</div>
+  </div>
+</aside>
+
+<main class="main">
+<header class="topbar">
+  <div class="row">
+    <button class="mobile-menu" id="mobileMenu">☰</button>
+    <strong id="pageTitle">Overview</strong>
+  </div>
+  <div class="topbar-right">
+    <span class="status-dot" id="connectionDot"></span>
+    <span class="connection-label" id="connectionText">Not connected</span>
+    <button class="small" onclick="showPage('network')">Connection</button>
+  </div>
+</header>
+
+<div class="content">
+
+<!-- OVERVIEW -->
+<section class="page active" id="page-overview">
+  <div class="page-head">
+    <div>
+      <h2>Device Overview</h2>
+      <p>Temple audio system status and quick controls.</p>
+    </div>
+    <button class="primary" onclick="refreshStatus()">↻ Refresh Status</button>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="stat-label">DEVICE</div><div class="stat" id="overviewDevice">Offline</div><span class="badge red" id="deviceBadge">Disconnected</span></div>
+    <div class="card"><div class="stat-label">PLAYBACK</div><div class="stat" id="overviewPlayback">Stopped</div><span class="badge">Audio status</span></div>
+    <div class="card"><div class="stat-label">SD CARD</div><div class="stat" id="overviewStorage">Unknown</div><span class="badge">Storage</span></div>
+    <div class="card"><div class="stat-label">NEXT SCHEDULE</div><div class="stat" id="overviewNext">--:--</div><span class="badge">Upcoming</span></div>
+  </div>
+  <div class="grid two section">
+    <div class="card">
+      <h3>Quick Audio Controls</h3>
+      <div class="row wrap">
+        <button onclick="audioAction('play')">▶ Play</button>
+        <button onclick="audioAction('pause')">Ⅱ Pause</button>
+        <button onclick="audioAction('resume')">▶ Resume</button>
+        <button onclick="audioAction('stop')">■ Stop</button>
+      </div>
+      <hr>
+      <div class="field">
+        <label>Volume</label>
+        <input type="range" min="0" max="100" value="70" id="quickVolume" oninput="setVolume(this.value)">
+        <span id="volumeText" class="muted">70%</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>System Information</h3>
+      <p class="muted" id="systemInfo">Connect your ESP32 to load system information.</p>
+      <button onclick="callApiByPath('/api/info','GET')">Get Device Information</button>
+    </div>
+  </div>
+</section>
+
+<!-- AUDIO PLAYER -->
+<section class="page" id="page-player">
+  <div class="page-head"><div><h2>Audio Player</h2><p>Control audio playback on the ESP32.</p></div></div>
+  <div class="card">
+    <h3>Now Playing</h3>
+    <h2 id="currentTrack">No track selected</h2>
+    <p class="muted" id="playbackState">Playback stopped</p>
+    <div class="row wrap">
+      <button onclick="audioAction('previous')">⏮ Previous</button>
+      <button class="primary" onclick="audioAction('play')">▶ Play</button>
+      <button onclick="audioAction('pause')">Ⅱ Pause</button>
+      <button onclick="audioAction('resume')">▶ Resume</button>
+      <button onclick="audioAction('stop')">■ Stop</button>
+      <button onclick="audioAction('next')">⏭ Next</button>
+    </div>
+    <hr>
+    <label>Volume</label>
+    <input type="range" min="0" max="100" value="70" oninput="setVolume(this.value)">
+  </div>
+  <div class="card section">
+    <h3>Playback Settings</h3>
+    <div class="field-row">
+      <div class="field"><label>Repeat mode</label>
+        <select id="repeatMode"><option value="off">Off</option><option value="one">Repeat one</option><option value="all">Repeat all</option></select>
+      </div>
+      <div class="field"><label>Shuffle</label>
+        <select id="shuffleMode"><option value="false">Disabled</option><option value="true">Enabled</option></select>
+      </div>
+    </div>
+    <button onclick="savePlaybackSettings()">Save Playback Settings</button>
+  </div>
+</section>
+
+<!-- FILES -->
+<section class="page" id="page-files">
+  <div class="page-head"><div><h2>SD Card Files</h2><p>Browse and manage files stored on the ESP32 microSD card.</p></div>
+    <button class="primary" onclick="loadFiles()">↻ Refresh Files</button>
+  </div>
+  <div class="card">
+    <div class="row between wrap">
+      <div><strong>SD Card File Browser</strong><p class="muted" id="sdStatus">SD card status not loaded.</p></div>
+      <button onclick="loadSdInfo()">Storage Information</button>
+    </div>
+    <div class="field"><label>Folder path</label><input id="folderPath" value="/"></div>
+    <div class="field"><label>Search files</label><input id="fileSearch" placeholder="Search file name..." oninput="renderFiles()"></div>
+    <div class="row wrap">
+      <input type="file" id="uploadFile" accept="audio/*" multiple>
+      <button onclick="uploadFiles()">Upload selected files</button>
+    </div>
+    <div class="table-wrap section">
+      <table><thead><tr><th>Name</th><th>Type</th><th>Size</th><th>Actions</th></tr></thead>
+      <tbody id="fileTable"><tr><td colspan="4" class="empty">Connect to ESP32 and load files.</td></tr></tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- PLAYLISTS -->
+<section class="page" id="page-playlists">
+  <div class="page-head"><div><h2>Playlists</h2><p>Create and manage audio playlists.</p></div><button class="primary" onclick="createPlaylist()">+ Create Playlist</button></div>
+  <div class="card">
+    <div class="row between"><h3>Saved Playlists</h3><button onclick="loadPlaylists()">↻ Refresh</button></div>
+    <div id="playlistList" class="empty">Connect to load playlists.</div>
+  </div>
+</section>
+
+<!-- SCHEDULES -->
+<section class="page" id="page-schedules">
+  <div class="page-head"><div><h2>Schedules</h2><p>Configure automatic playback events.</p></div><button class="primary" onclick="createSchedule()">+ Add Schedule</button></div>
+  <div class="card">
+    <div class="row between"><h3>Saved Schedules</h3><button onclick="loadSchedules()">↻ Refresh</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Name</th><th>Time</th><th>Repeat</th><th>Status</th><th>Actions</th></tr></thead><tbody id="scheduleTable"><tr><td colspan="5" class="empty">Load schedules from ESP32.</td></tr></tbody></table></div>
+  </div>
+  <div class="card section">
+    <h3>Create or Update Schedule</h3>
+    <div class="field-row">
+      <div class="field"><label>Schedule ID (for editing)</label><input id="scheduleId" placeholder="Leave empty for new schedule"></div>
+      <div class="field"><label>Schedule name</label><input id="scheduleName" placeholder="Morning announcement"></div>
+      <div class="field"><label>Time</label><input id="scheduleTime" type="time"></div>
+      <div class="field"><label>Repeat</label><select id="scheduleRepeat"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="once">Once</option></select></div>
+      <div class="field"><label>Audio file or playlist ID</label><input id="scheduleAudio" placeholder="/audio/announcement.mp3"></div>
+      <div class="field"><label>Enabled</label><select id="scheduleEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
+    </div>
+    <button class="primary" onclick="saveSchedule()">Save Schedule</button>
+  </div>
+</section>
+
+<!-- PRAYERS -->
+<section class="page" id="page-prayers">
+  <div class="page-head">
+    <div><h2>Prayer Timings & Audio Sequences</h2><p>Assign one or multiple audio files to each prayer and control their playback order.</p></div>
+    <button class="primary" onclick="loadPrayers()">↻ Refresh</button>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="stat-label">PRAYER EVENTS</div><div class="stat" id="prayerCount">--</div></div>
+    <div class="card"><div class="stat-label">NEXT PRAYER</div><div class="stat" id="nextPrayer">--</div></div>
+    <div class="card"><div class="stat-label">ENABLED</div><div class="stat" id="enabledPrayers">--</div></div>
+    <div class="card"><div class="stat-label">AUDIO SEQUENCES</div><div class="stat" id="sequenceCount">--</div></div>
+  </div>
+
+  <div class="card section">
+    <h3>Prayer Configuration</h3>
+    <div class="field-row">
+      <div class="field"><label>Prayer ID</label><input id="prayerId" placeholder="e.g. morning"></div>
+      <div class="field"><label>Prayer name</label><input id="prayerName" placeholder="Morning prayer"></div>
+      <div class="field"><label>Prayer time</label><input id="prayerTime" type="time"></div>
+      <div class="field"><label>Enabled</label><select id="prayerEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
+    </div>
+    <button class="primary" onclick="savePrayer()">Save Prayer</button>
+  </div>
+
+  <div class="card section">
+    <div class="row between wrap"><h3>Saved Prayer Events</h3><button onclick="loadPrayers()">Refresh</button></div>
+    <div id="prayerList" class="empty">Load prayer events from ESP32.</div>
+  </div>
+
+  <div class="card section">
+    <h3>Prayer Audio Sequence Editor</h3>
+    <p class="muted">Choose a prayer, add audio files from the SD card, then drag them into the desired playback order.</p>
+    <div class="field-row">
+      <div class="field"><label>Prayer ID</label><input id="sequencePrayerId" placeholder="Prayer ID"></div>
+      <div class="field"><label>Sequence mode</label><select id="sequenceMode"><option value="sequential">Play in order (sequential)</option><option value="repeat">Repeat sequence</option></select></div>
+    </div>
+    <div class="field">
+      <label>Audio file path on SD card</label>
+      <div class="row">
+        <input id="audioToAdd" placeholder="/audio/announcement.mp3">
+        <button onclick="addSequenceAudio()">+ Add</button>
+      </div>
+    </div>
+    <div class="row wrap">
+      <button onclick="loadFilesForPrayer()">Load SD Card Files</button>
+      <button onclick="previewSequence()">Preview Sequence</button>
+      <button class="primary" onclick="saveSequence()">Save Audio Sequence</button>
+    </div>
+    <div id="sequenceFileChoices" class="section"></div>
+    <hr>
+    <h3>Playback Order</h3>
+    <div id="sequenceList"><div class="empty">Select a prayer and add audio files.</div></div>
+    <div class="field-row section">
+      <div class="field"><label>Delay between files (milliseconds)</label><input id="sequenceDelay" type="number" min="0" value="1000"></div>
+      <div class="field"><label>Stop after sequence</label><select id="stopAfterSequence"><option value="true">Yes</option><option value="false">No</option></select></div>
+    </div>
+  </div>
+</section>
+
+<!-- SCHEDULER MONITOR -->
+<section class="page" id="page-scheduler">
+  <div class="page-head"><div><h2>Scheduler Reliability Monitor</h2><p>Monitor clock, missed events, queue and execution history.</p></div><button onclick="loadScheduler()">↻ Refresh</button></div>
+  <div class="grid">
+    <div class="card"><div class="stat-label">SCHEDULER</div><div class="stat" id="schedulerState">Unknown</div></div>
+    <div class="card"><div class="stat-label">CLOCK</div><div class="stat" id="schedulerClock">Unknown</div></div>
+    <div class="card"><div class="stat-label">MISSED EVENTS</div><div class="stat" id="missedEvents">--</div></div>
+    <div class="card"><div class="stat-label">NEXT EVENT</div><div class="stat" id="schedulerNext">--</div></div>
+  </div>
+  <div class="card section">
+    <h3>Scheduler Operations</h3>
+    <div class="row wrap">
+      <button onclick="callApiByPath('/api/scheduler/reconcile','POST',{})">Reconcile Schedules</button>
+      <button onclick="callApiByPath('/api/scheduler/resync-time','POST',{})">Resynchronize Time</button>
+      <button onclick="callApiByPath('/api/scheduler/health','GET')">Check Health</button>
+    </div>
+  </div>
+  <div class="card section">
+    <h3>Execution History</h3>
+    <div id="schedulerHistory" class="empty">Load scheduler history.</div>
+  </div>
+</section>
+
+<!-- AMPLIFIER -->
+<section class="page" id="page-amplifier">
+  <div class="page-head"><div><h2>Amplifier Control</h2><p>Controls depend on the amplifier hardware and firmware implementation.</p></div></div>
+  <div class="card">
+    <div class="field"><label>Volume</label><input type="range" min="0" max="100" value="70" id="ampVolume"></div>
+    <div class="row wrap">
+      <button onclick="callApiByPath('/api/amplifier/power','POST',{power:true})">Power ON</button>
+      <button onclick="callApiByPath('/api/amplifier/power','POST',{power:false})">Power OFF</button>
+      <button onclick="callApiByPath('/api/amplifier/mute','POST',{mute:true})">Mute</button>
+      <button onclick="callApiByPath('/api/amplifier/mute','POST',{mute:false})">Unmute</button>
+      <button onclick="callApiByPath('/api/amplifier/status','GET')">Get Status</button>
+    </div>
+  </div>
+</section>
+
+<!-- DISPLAY -->
+<section class="page" id="page-display">
+  <div class="page-head"><div><h2>LCD Display</h2><p>Send text and display commands to the LCD.</p></div></div>
+  <div class="card">
+    <div class="field"><label>Line 1</label><input id="lcdLine1" maxlength="16" placeholder="Temple Audio"></div>
+    <div class="field"><label>Line 2</label><input id="lcdLine2" maxlength="16" placeholder="System Ready"></div>
+    <div class="row wrap">
+      <button class="primary" onclick="callApiByPath('/api/display/text','POST',{line1:document.getElementById('lcdLine1').value,line2:document.getElementById('lcdLine2').value})">Display Text</button>
+      <button onclick="callApiByPath('/api/display/clear','POST',{})">Clear Display</button>
+      <button onclick="callApiByPath('/api/display/status','GET')">Get Status</button>
+    </div>
+  </div>
+</section>
+
+<!-- NETWORK -->
+<section class="page" id="page-network">
+  <div class="page-head"><div><h2>Network & ESP32 Connection</h2><p>Configure the connection between this dashboard and the ESP32.</p></div></div>
+  <div class="card">
+    <div class="field"><label>ESP32 API base URL</label><input id="apiBase" placeholder="http://192.168.1.100"></div>
+    <div class="field"><label>Optional API token</label><input id="apiToken" type="password" placeholder="Leave empty if authentication is not configured"></div>
+    <div class="row wrap">
+      <button class="primary" onclick="saveConnection()">Save Connection</button>
+      <button onclick="testConnection()">Test Connection</button>
+      <button onclick="callApiByPath('/api/network/status','GET')">Network Status</button>
+    </div>
+    <hr>
+    <div id="connectionResult" class="muted">Connection not tested.</div>
+  </div>
+</section>
+
+<!-- DIAGNOSTICS -->
+<section class="page" id="page-diagnostics">
+  <div class="page-head"><div><h2>Diagnostics</h2><p>Inspect device health and hardware capability information.</p></div></div>
+  <div class="card">
+    <div class="row wrap">
+      <button onclick="callApiByPath('/api/health','GET')">Health</button>
+      <button onclick="callApiByPath('/api/diagnostics','GET')">Diagnostics</button>
+      <button onclick="callApiByPath('/api/memory','GET')">Memory</button>
+      <button onclick="callApiByPath('/api/storage','GET')">Storage</button>
+      <button onclick="callApiByPath('/api/capabilities','GET')">Capabilities</button>
+      <button onclick="callApiByPath('/api/sd/status','GET')">SD Status</button>
+    </div>
+    <pre id="diagnosticOutput">Diagnostic responses will appear here.</pre>
+  </div>
+</section>
+
+<!-- LOGS -->
+<section class="page" id="page-logs">
+  <div class="page-head"><div><h2>Logs & Alerts</h2><p>System, audio and scheduler events.</p></div><button onclick="loadLogs()">↻ Refresh</button></div>
+  <div class="card">
+    <div class="row wrap">
+      <button onclick="loadLogs('/api/logs')">System Logs</button>
+      <button onclick="loadLogs('/api/logs/audio')">Audio Logs</button>
+      <button onclick="loadLogs('/api/logs/scheduler')">Scheduler Logs</button>
+      <button onclick="loadLogs('/api/alerts')">Alerts</button>
+      <button onclick="loadLogs('/api/errors')">Errors</button>
+    </div>
+    <pre id="logsOutput">Select a log category.</pre>
+  </div>
+</section>
+
+<!-- BACKUP -->
+<section class="page" id="page-backup">
+  <div class="page-head"><div><h2>Backup & Restore</h2><p>Protect schedules, playlists and configuration.</p></div></div>
+  <div class="card">
+    <div class="row wrap">
+      <button class="primary" onclick="callApiByPath('/api/backup','POST',{})">Create Backup</button>
+      <button onclick="callApiByPath('/api/backups','GET')">List Backups</button>
+      <button onclick="callApiByPath('/api/backup/verify','POST',{})">Verify Backup</button>
+    </div>
+    <div class="field section"><label>Backup ID to restore</label><input id="restoreId" placeholder="Backup ID"></div>
+    <button class="danger" onclick="restoreBackup()">Restore Backup</button>
+    <pre id="backupOutput">Backup results will appear here.</pre>
+  </div>
+</section>
+
+<!-- API DOCUMENTATION -->
+<section class="page" id="page-api">
+  <div class="page-head">
+    <div><h2>API Documentation</h2><p>Explore every planned endpoint, its function, parameters, request and response examples.</p></div>
+    <button onclick="exportApiCatalogue()">Export API Catalogue</button>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="stat-label">TOTAL DOCUMENTED APIS</div><div class="stat" id="apiTotal">0</div></div>
+    <div class="card"><div class="stat-label">GET</div><div class="stat" id="apiGet">0</div></div>
+    <div class="card"><div class="stat-label">POST</div><div class="stat" id="apiPost">0</div></div>
+    <div class="card"><div class="stat-label">PUT / DELETE</div><div class="stat" id="apiOther">0</div></div>
+  </div>
+  <div class="card section">
+    <div class="api-tools">
+      <input id="apiSearch" placeholder="Search API name, path, module or function..." oninput="renderApis()">
+      <select id="apiModule" onchange="renderApis()" style="max-width:220px"><option value="">All modules</option></select>
+      <select id="apiMethod" onchange="renderApis()" style="max-width:140px">
+        <option value="">All methods</option><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option>
+      </select>
+      <select id="apiStatus" onchange="renderApis()" style="max-width:170px">
+        <option value="">All statuses</option><option>Planned</option><option>Implemented</option><option>Tested</option>
+      </select>
+    </div>
+    <div class="row between">
+      <h3>API Endpoints</h3>
+      <span class="muted" id="apiResultCount"></span>
+    </div>
+    <div id="apiList" class="api-list"></div>
+  </div>
+</section>
+
+<!-- SETTINGS -->
+<section class="page" id="page-settings">
+  <div class="page-head"><div><h2>Settings</h2><p>Dashboard and device configuration.</p></div></div>
+  <div class="card">
+    <h3>Device Time</h3>
+    <div class="field"><label>Device date and time</label><input type="datetime-local" id="deviceTime"></div>
+    <button onclick="setDeviceTime()">Set Device Time</button>
+    <hr>
+    <h3>Configuration</h3>
+    <div class="row wrap">
+      <button onclick="callApiByPath('/api/config','GET')">Get Configuration</button>
+      <button onclick="callApiByPath('/api/config/audio','GET')">Audio Configuration</button>
+      <button onclick="callApiByPath('/api/config/scheduler','GET')">Scheduler Configuration</button>
+      <button onclick="callApiByPath('/api/config/device','GET')">Device Configuration</button>
+    </div>
+    <hr>
+    <button class="danger" onclick="restartDevice()">Restart ESP32</button>
+  </div>
+</section>
+
+</div>
+</main>
+</div>
+
+<!-- API DETAIL MODAL -->
+<div class="modal-backdrop" id="apiModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="row wrap" id="modalMethod"></div>
+        <h2 id="modalTitle" style="margin:12px 0 6px"></h2>
+        <div class="api-path" id="modalPath"></div>
+      </div>
+      <button onclick="closeModal()">✕</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   TEMPLE AUDIO DASHBOARD
+   Frontend only. Actual API routes must exist in firmware.
+========================================================= */
+
+const API_ROWS = `
+Device & System|GET|/api/health|Check device health|Checks whether ESP32 is online|Essential
+Device & System|GET|/api/status|Get device status|Returns current device state, uptime and operating status|Essential
+Device & System|GET|/api/info|Get device information|Returns chip model, firmware version and hardware details|High
+Device & System|GET|/api/uptime|Get uptime|Shows how long the ESP32 has been running|Medium
+Device & System|GET|/api/memory|Get memory information|Shows free heap and PSRAM information|Medium
+Device & System|GET|/api/storage|Get storage information|Shows SD card capacity and free space|Essential
+Device & System|POST|/api/restart|Restart device|Restarts the ESP32 remotely|High
+Device & System|GET|/api/logs|Get system logs|Returns recent system activity and errors|High
+Device & System|GET|/api/version|Get firmware version|Shows installed firmware version|Medium
+Device & System|POST|/api/time|Set device time|Updates the device clock|Essential
+Device & System|GET|/api/diagnostics|Run diagnostics|Checks system components and reports errors|High
+Wi-Fi & Network|GET|/api/network/status|Get network status|Shows Wi-Fi mode, SSID and IP address|Essential
+Wi-Fi & Network|POST|/api/network/config|Configure Wi-Fi|Saves Wi-Fi network credentials|Essential
+Wi-Fi & Network|POST|/api/network/connect|Connect to Wi-Fi|Connects ESP32 to configured router|Essential
+Wi-Fi & Network|POST|/api/network/disconnect|Disconnect Wi-Fi|Disconnects from current Wi-Fi network|Medium
+Wi-Fi & Network|POST|/api/network/ap/enable|Enable access point|Enables ESP32 setup Wi-Fi|High
+Wi-Fi & Network|POST|/api/network/ap/disable|Disable access point|Disables ESP32 setup Wi-Fi|Medium
+Wi-Fi & Network|GET|/api/network/clients|Get connected clients|Shows devices connected to ESP32 access point|Low
+Audio Playback|POST|/api/audio/play|Play audio|Starts playback of a selected audio file|Essential
+Audio Playback|POST|/api/audio/pause|Pause audio|Pauses current playback|Essential
+Audio Playback|POST|/api/audio/resume|Resume audio|Continues paused playback|Essential
+Audio Playback|POST|/api/audio/stop|Stop audio|Stops current playback|Essential
+Audio Playback|POST|/api/audio/next|Next track|Plays next track in playlist|High
+Audio Playback|POST|/api/audio/previous|Previous track|Plays previous track|High
+Audio Playback|POST|/api/audio/seek|Seek audio|Jumps to a playback position|Medium
+Audio Playback|GET|/api/audio/volume|Get volume|Returns current volume level|Essential
+Audio Playback|POST|/api/audio/volume|Set volume|Changes playback volume|Essential
+Audio Playback|GET|/api/audio/status|Get playback status|Shows playing, paused, stopped or error state|Essential
+Audio Playback|GET|/api/audio/current|Get current track|Shows currently playing file information|Essential
+Audio Playback|GET|/api/audio/progress|Get playback progress|Shows elapsed and remaining playback time|High
+Audio Playback|POST|/api/audio/repeat|Set repeat mode|Enables repeat one, repeat all or repeat off|Medium
+Audio Playback|POST|/api/audio/shuffle|Set shuffle mode|Enables or disables random playback|Low
+Audio Playback|GET|/api/audio/formats|Get supported formats|Shows supported audio formats|High
+MicroSD & Files|GET|/api/sd/status|Get SD status|Checks whether SD card is detected|Essential
+MicroSD & Files|GET|/api/sd/info|Get SD information|Shows capacity, used space and free space|Essential
+MicroSD & Files|GET|/api/files|List files|Returns audio files and folders|Essential
+MicroSD & Files|GET|/api/files/info|Get file information|Shows file name, size, type and duration if available|Medium
+MicroSD & Files|POST|/api/files/upload|Upload file|Uploads audio files to SD card|High
+MicroSD & Files|GET|/api/files/download|Download file|Downloads a selected file|Medium
+MicroSD & Files|DELETE|/api/files/delete|Delete file|Deletes a selected file|High
+MicroSD & Files|POST|/api/files/rename|Rename file|Changes a file or folder name|Medium
+MicroSD & Files|POST|/api/files/mkdir|Create folder|Creates a folder on SD card|Medium
+MicroSD & Files|GET|/api/files/search|Search files|Finds audio files by name|Medium
+MicroSD & Files|POST|/api/files/move|Move file|Moves files between folders|Low
+MicroSD & Files|POST|/api/sd/remount|Remount SD|Attempts to recover SD card after an error|High
+Playlists|GET|/api/playlists|Get playlists|Lists all saved playlists|Essential
+Playlists|GET|/api/playlists/{id}|Get playlist|Returns tracks inside a playlist|Essential
+Playlists|POST|/api/playlists|Create playlist|Creates a new playlist|Essential
+Playlists|PUT|/api/playlists/{id}|Update playlist|Changes playlist name or settings|High
+Playlists|DELETE|/api/playlists/{id}|Delete playlist|Deletes playlist without deleting audio files|High
+Playlists|POST|/api/playlists/{id}/tracks|Add track|Adds an audio file to a playlist|Essential
+Playlists|DELETE|/api/playlists/{id}/tracks/{trackId}|Remove track|Removes a track from a playlist|High
+Playlists|POST|/api/playlists/{id}/reorder|Reorder tracks|Changes order of playlist tracks|Medium
+Playlists|POST|/api/playlists/{id}/play|Play playlist|Starts a selected playlist|Essential
+Playlists|POST|/api/playlists/{id}/stop|Stop playlist|Stops playlist playback|Medium
+Playlists|GET|/api/playlists/status|Get playlist status|Shows active playlist and track position|High
+Schedules|GET|/api/schedules|Get schedules|Lists all saved schedules|Essential
+Schedules|GET|/api/schedules/{id}|Get schedule|Shows details of one schedule|High
+Schedules|POST|/api/schedules|Create schedule|Creates a scheduled playback event|Essential
+Schedules|PUT|/api/schedules/{id}|Update schedule|Edits an existing scheduled event|Essential
+Schedules|DELETE|/api/schedules/{id}|Delete schedule|Deletes a scheduled event|Essential
+Schedules|POST|/api/schedules/{id}/enable|Enable schedule|Activates a schedule|Essential
+Schedules|POST|/api/schedules/{id}/disable|Disable schedule|Deactivates a schedule|Essential
+Schedules|POST|/api/schedules/enable-all|Enable all|Activates all saved schedules|Medium
+Schedules|POST|/api/schedules/disable-all|Disable all|Deactivates all schedules|Medium
+Schedules|GET|/api/schedules/today|Get today's schedules|Shows events planned for today|Essential
+Schedules|GET|/api/schedules/upcoming|Get upcoming schedules|Shows upcoming scheduled events|High
+Schedules|GET|/api/schedules/history|Get schedule history|Shows previously executed events|High
+Schedules|GET|/api/schedules/next|Get next schedule|Shows the next scheduled event|Essential
+Schedules|POST|/api/schedules/{id}/test|Test schedule|Tests a schedule without waiting for normal time|Medium
+Schedules|POST|/api/schedules/{id}/skip|Skip schedule|Skips next occurrence of an event|Medium
+Schedules|POST|/api/schedules/{id}/run-now|Run immediately|Starts schedule audio immediately|High
+Scheduler Reliability|GET|/api/scheduler/status|Get scheduler status|Shows whether scheduling engine is running|Essential
+Scheduler Reliability|GET|/api/scheduler/clock|Get clock status|Shows date, time and synchronization status|Essential
+Scheduler Reliability|GET|/api/scheduler/last-execution|Get last execution|Shows most recently executed scheduled event|High
+Scheduler Reliability|GET|/api/scheduler/missed|Get missed events|Shows schedules missed during downtime or errors|Essential
+Scheduler Reliability|GET|/api/scheduler/queue|Get execution queue|Shows pending scheduled playback events|High
+Scheduler Reliability|POST|/api/scheduler/reconcile|Reconcile schedules|Checks saved schedules against execution history after reboot|Essential
+Scheduler Reliability|POST|/api/scheduler/resync-time|Resynchronize time|Updates device time from trusted time source|Essential
+Scheduler Reliability|GET|/api/scheduler/statistics|Get scheduler statistics|Shows successful, missed and failed executions|Medium
+Scheduler Reliability|GET|/api/scheduler/health|Check scheduler health|Checks scheduling engine and persistent storage|Essential
+Prayer Timings|GET|/api/prayers|Get prayer timings|Returns saved prayer times|High
+Prayer Timings|POST|/api/prayers|Save prayer timings|Saves daily prayer timings|High
+Prayer Timings|GET|/api/prayers/today|Get today's timings|Shows today's prayer timings|High
+Prayer Timings|GET|/api/prayers/upcoming|Get upcoming prayers|Shows next prayer events|High
+Prayer Timings|POST|/api/prayers/{id}/enable|Enable prayer event|Enables prayer announcement|High
+Prayer Timings|POST|/api/prayers/{id}/disable|Disable prayer event|Disables prayer announcement|High
+Prayer Timings|POST|/api/prayers/{id}/audio|Assign prayer audio|Selects audio for a prayer event|High
+Prayer Timings|GET|/api/prayers/status|Get prayer status|Shows prayer announcement configuration|Medium
+Prayer Audio Management|GET|/api/prayers/{id}/audio|Get assigned audio list|Returns all audio files assigned to prayer in playback order|Essential
+Prayer Audio Management|POST|/api/prayers/{id}/audio|Add audio files|Assigns one or multiple audio files to a prayer|Essential
+Prayer Audio Management|PUT|/api/prayers/{id}/audio|Replace audio list|Replaces complete audio sequence assigned to a prayer|Essential
+Prayer Audio Management|DELETE|/api/prayers/{id}/audio/{audioId}|Remove assigned audio|Removes one audio file from a prayer sequence|Essential
+Prayer Audio Management|PUT|/api/prayers/{id}/audio/reorder|Reorder audio files|Changes playback order of assigned audio files|Essential
+Prayer Audio Management|PUT|/api/prayers/{id}/audio/{audioId}|Update audio settings|Enables, disables or updates an assigned audio item|High
+Prayer Audio Management|POST|/api/prayers/{id}/audio/preview|Preview audio sequence|Tests complete assigned audio sequence|High
+Prayer Audio Management|POST|/api/prayers/{id}/audio/{audioId}/preview|Preview individual audio|Plays one selected audio file for testing|Medium
+Prayer Audio Management|PUT|/api/prayers/{id}/audio/settings|Update playback settings|Configures sequence mode, delay and playback options|High
+Prayer Audio Management|GET|/api/prayers/{id}/audio/status|Get audio sequence status|Shows assigned audio count and sequence information|Medium
+Amplifier|GET|/api/amplifier/status|Get amplifier status|Shows amplifier state where hardware supports it|High
+Amplifier|POST|/api/amplifier/power|Control amplifier power|Turns amplifier on or off if supported|High
+Amplifier|POST|/api/amplifier/volume|Set amplifier volume|Changes amplifier gain if supported|High
+Amplifier|POST|/api/amplifier/mute|Mute amplifier|Mutes or unmutes amplifier if supported|High
+Amplifier|GET|/api/amplifier/temperature|Get temperature|Reads amplifier temperature if sensor is available|Low
+Amplifier|GET|/api/amplifier/diagnostics|Amplifier diagnostics|Checks amplifier-related hardware if supported|Medium
+Buzzer|GET|/api/buzzer/status|Get buzzer status|Shows buzzer availability and state|Medium
+Buzzer|POST|/api/buzzer/play|Play buzzer|Activates buzzer|Medium
+Buzzer|POST|/api/buzzer/stop|Stop buzzer|Stops buzzer output|Medium
+Buzzer|POST|/api/buzzer/pattern|Set buzzer pattern|Plays predefined alert pattern|Low
+Buzzer|POST|/api/buzzer/test|Test buzzer|Tests buzzer operation|Medium
+LCD Display|GET|/api/display/status|Get display status|Shows LCD connection and display state|Medium
+LCD Display|POST|/api/display/text|Display text|Displays text on LCD|High
+LCD Display|POST|/api/display/clear|Clear display|Clears LCD|Medium
+LCD Display|POST|/api/display/brightness|Set brightness|Adjusts brightness if supported|Low
+LCD Display|POST|/api/display/mode|Set display mode|Changes information shown on LCD|Medium
+LCD Display|GET|/api/display/current|Get current display content|Returns current display message|Low
+Configuration|GET|/api/config|Get configuration|Returns general device settings|High
+Configuration|PUT|/api/config|Update configuration|Saves general device settings|High
+Configuration|GET|/api/config/audio|Get audio settings|Returns audio configuration|High
+Configuration|PUT|/api/config/audio|Update audio settings|Saves audio configuration|High
+Configuration|GET|/api/config/scheduler|Get scheduler settings|Returns scheduling configuration|Essential
+Configuration|PUT|/api/config/scheduler|Update scheduler settings|Saves scheduling configuration|Essential
+Configuration|GET|/api/config/device|Get device settings|Returns device-specific settings|Medium
+Configuration|PUT|/api/config/device|Update device settings|Saves device-specific settings|Medium
+Backup & Restore|POST|/api/backup|Create backup|Backs up schedules, playlists and configuration|High
+Backup & Restore|GET|/api/backups|Get backups|Lists available backups|Medium
+Backup & Restore|GET|/api/backups/{id}|Download backup|Downloads a selected backup|Medium
+Backup & Restore|POST|/api/backup/restore|Restore backup|Restores saved configuration and schedules|High
+Backup & Restore|POST|/api/backup/verify|Verify backup|Checks backup integrity|Medium
+Backup & Restore|POST|/api/backup/auto|Automatic backup|Configures automatic backup creation|Low
+Events & Logs|GET|/api/events|Get events|Returns recent device events|High
+Events & Logs|GET|/api/alerts|Get alerts|Shows important device alerts|High
+Events & Logs|DELETE|/api/alerts|Clear alerts|Clears acknowledged alerts|Low
+Events & Logs|GET|/api/errors|Get errors|Shows system errors|High
+Events & Logs|GET|/api/logs/audio|Get audio logs|Shows playback activity and errors|Medium
+Events & Logs|GET|/api/logs/scheduler|Get scheduler logs|Shows schedule execution records|Essential
+Firmware Updates|GET|/api/firmware/version|Get firmware version|Shows installed and available firmware version|Medium
+Firmware Updates|POST|/api/firmware/upload|Upload firmware|Uploads a firmware image|Low
+Firmware Updates|POST|/api/firmware/update|Install firmware|Installs firmware update using supported OTA method|Medium
+Firmware Updates|GET|/api/firmware/progress|Get update progress|Shows firmware update progress|Low
+Firmware Updates|POST|/api/firmware/rollback|Roll back firmware|Returns to previous firmware if partition support exists|Low
+Security|POST|/api/auth/login|Login|Authenticates dashboard or user|High
+Security|POST|/api/auth/logout|Logout|Ends authenticated session|Medium
+Security|GET|/api/auth/status|Get authentication status|Checks whether user is authenticated|High
+Security|GET|/api/security/status|Get security status|Shows authentication and network security settings|High
+Security|GET|/api/schema|Get API schema|Documents supported API endpoints|Medium
+Security|GET|/api/capabilities|Get device capabilities|Shows features supported by actual hardware|High
+`.trim();
+
+const APIs = API_ROWS.split("\n").map((line,index)=>{
+  const [module,method,path,name,description,priority] = line.split("|");
+  return {
+    id:index+1,module,method,path,name,description,priority,
+    status:"Planned"
+  };
+});
+
+/* Navigation */
+function showPage(name){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
+  const page=document.getElementById("page-"+name);
+  if(page) page.classList.add("active");
+  const btn=document.querySelector('[data-page="'+name+'"]');
+  document.getElementById("pageTitle").textContent=btn?btn.textContent.trim():"Temple Audio";
+  document.getElementById("sidebar").classList.remove("open");
+  if(name==="api")renderApis();
+}
+document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
+document.getElementById("mobileMenu").onclick=()=>document.getElementById("sidebar").classList.toggle("open");
+
+/* Connection */
+let baseUrl=localStorage.getItem("temple_api_base")||"http://192.168.4.1";
+let apiToken=localStorage.getItem("temple_api_token")||"";
+document.getElementById("apiBase").value=baseUrl;
+document.getElementById("apiToken").value=apiToken;
+
+function saveConnection(){
+  baseUrl=document.getElementById("apiBase").value.trim().replace(/\/+$/,"");
+  apiToken=document.getElementById("apiToken").value.trim();
+  localStorage.setItem("temple_api_base",baseUrl);
+  localStorage.setItem("temple_api_token",apiToken);
+  toast("Connection settings saved.");
+}
+function setConnection(online){
+  document.getElementById("connectionDot").classList.toggle("online",online);
+  document.getElementById("connectionText").textContent=online?"ESP32 Connected":"Not connected";
+  document.getElementById("overviewDevice").textContent=online?"Online":"Offline";
+  document.getElementById("deviceBadge").textContent=online?"Connected":"Disconnected";
+  document.getElementById("deviceBadge").className="badge "+(online?"green":"red");
+}
+async function requestApi(path,method="GET",body=null,options={}){
+  const url=baseUrl+path;
+  const headers={};
+  if(apiToken)headers["Authorization"]="Bearer "+apiToken;
+  if(body!==null && !(body instanceof FormData))headers["Content-Type"]="application/json";
+  const config={method,headers};
+  if(body!==null)config.body=body instanceof FormData?body:JSON.stringify(body);
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),options.timeout||10000);
+  config.signal=controller.signal;
+  try{
+    const response=await fetch(url,config);
+    const raw=await response.text();
+    let data;
+    try{data=raw?JSON.parse(raw):{};}catch{data=raw;}
+    if(!response.ok)throw new Error("HTTP "+response.status+": "+(typeof data==="string"?data:JSON.stringify(data)));
+    setConnection(true);
+    return {status:response.status,data};
+  }catch(error){
+    if(!options.silent)setConnection(false);
+    throw error;
+  }finally{clearTimeout(timer);}
+}
+async function callApiByPath(path,method="GET",body=null){
+  try{
+    const result=await requestApi(path,method,body);
+    showApiResult(result.data);
+    toast("API request successful.");
+    return result.data;
+  }catch(e){toast(e.message);showApiResult({error:e.message});return null;}
+}
+function showApiResult(data){
+  const out=JSON.stringify(data,null,2);
+  const target=document.getElementById("diagnosticOutput");
+  if(target)target.textContent=out;
+}
+async function testConnection(){
+  saveConnection();
+  const result=document.getElementById("connectionResult");
+  result.textContent="Testing connection...";
+  try{
+    const r=await requestApi("/api/health","GET");
+    result.textContent="Connected. Response: "+JSON.stringify(r.data);
+    toast("ESP32 connection successful.");
+    await refreshStatus();
+  }catch(e){result.textContent="Connection failed: "+e.message;toast("Connection failed.");}
+}
+async function refreshStatus(){
+  try{
+    const r=await requestApi("/api/status");
+    document.getElementById("systemInfo").textContent=JSON.stringify(r.data);
+    document.getElementById("overviewPlayback").textContent=r.data.playback||r.data.audio_state||"Connected";
+  }catch(e){toast("Could not load device status.");}
+}
+function toast(message){
+  const t=document.getElementById("toast");
+  t.textContent=message;t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),3000);
+}
+
+/* Audio */
+async function audioAction(action){
+  const paths={play:"/api/audio/play",pause:"/api/audio/pause",resume:"/api/audio/resume",stop:"/api/audio/stop",next:"/api/audio/next",previous:"/api/audio/previous"};
+  await callApiByPath(paths[action],"POST",{});
+}
+async function setVolume(value){
+  document.getElementById("volumeText").textContent=value+"%";
+  try{await requestApi("/api/audio/volume","POST",{volume:Number(value)},{silent:true});}
+  catch(e){}
+}
+async function savePlaybackSettings(){
+  await callApiByPath("/api/audio/repeat","POST",{mode:document.getElementById("repeatMode").value});
+  await callApiByPath("/api/audio/shuffle","POST",{enabled:document.getElementById("shuffleMode").value==="true"});
+}
+
+/* SD card files */
+let sdFiles=[];
+async function loadFiles(){
+  try{
+    const r=await requestApi("/api/files?path="+encodeURIComponent(document.getElementById("folderPath").value));
+    sdFiles=Array.isArray(r.data)?r.data:(r.data.files||[]);
+    renderFiles();
+    toast("Files loaded.");
+  }catch(e){toast("Unable to load files: "+e.message);}
+}
+function renderFiles(){
+  const q=document.getElementById("fileSearch").value.toLowerCase();
+  const list=sdFiles.filter(f=>(f.name||f.path||"").toLowerCase().includes(q));
+  const body=document.getElementById("fileTable");
+  if(!list.length){body.innerHTML='<tr><td colspan="4" class="empty">No files found.</td></tr>';return;}
+  body.innerHTML=list.map(f=>{
+    const name=f.name||f.path||"Unknown";
+    const path=f.path||name;
+    return `<tr>
+      <td>${escapeHtml(name)}</td><td>${escapeHtml(f.type||"File")}</td>
+      <td>${formatBytes(f.size||0)}</td>
+      <td><button class="small" onclick="playFile('${escapeJs(path)}')">Play</button>
+      <button class="small danger" onclick="deleteFile('${escapeJs(path)}')">Delete</button></td>
+    </tr>`;
+  }).join("");
+}
+async function loadSdInfo(){
+  const r=await callApiByPath("/api/sd/info","GET");
+  if(r)document.getElementById("sdStatus").textContent=JSON.stringify(r);
+}
+async function playFile(path){await callApiByPath("/api/audio/play","POST",{file:path});}
+async function deleteFile(path){
+  if(!confirm("Delete "+path+"?"))return;
+  await callApiByPath("/api/files/delete","DELETE",{path});
+  loadFiles();
+}
+async function uploadFiles(){
+  const files=document.getElementById("uploadFile").files;
+  if(!files.length){toast("Select one or more files first.");return;}
+  for(const file of files){
+    const form=new FormData();form.append("file",file);
+    try{await requestApi("/api/files/upload","POST",form);}
+    catch(e){toast("Upload failed: "+e.message);return;}
+  }
+  toast("Upload completed.");
+  loadFiles();
+}
+
+/* Playlists */
+async function loadPlaylists(){
+  const data=await callApiByPath("/api/playlists","GET");
+  if(!data)return;
+  const list=Array.isArray(data)?data:(data.playlists||[]);
+  document.getElementById("playlistList").innerHTML=list.length?list.map(p=>`
+    <div class="api-item">
+      <div class="api-main"><strong>${escapeHtml(p.name||p.id)}</strong><span class="muted">${escapeHtml(String(p.track_count??(p.tracks||[]).length))} tracks</span></div>
+      <div class="row"><button class="small" onclick="callApiByPath('/api/playlists/${encodeURIComponent(p.id)}','GET')">Details</button><button class="small" onclick="callApiByPath('/api/playlists/${encodeURIComponent(p.id)}/play','POST',{})">Play</button></div>
+    </div>`).join(""):"<div class='empty'>No playlists.</div>";
+}
+async function createPlaylist(){
+  const name=prompt("Enter playlist name:");
+  if(!name)return;
+  await callApiByPath("/api/playlists","POST",{name});
+  loadPlaylists();
+}
+
+/* Schedules */
+async function loadSchedules(){
+  const data=await callApiByPath("/api/schedules","GET");
+  if(!data)return;
+  const list=Array.isArray(data)?data:(data.schedules||[]);
+  document.getElementById("scheduleTable").innerHTML=list.length?list.map(s=>`
+    <tr><td>${escapeHtml(s.name||s.id)}</td><td>${escapeHtml(s.time||"--")}</td>
+    <td>${escapeHtml(s.repeat||"--")}</td><td>${s.enabled?'<span class="badge green">Enabled</span>':'<span class="badge red">Disabled</span>'}</td>
+    <td><button class="small" onclick="editSchedule('${escapeJs(s.id)}')">Edit</button>
+    <button class="small" onclick="callApiByPath('/api/schedules/${encodeURIComponent(s.id)}/run-now','POST',{})">Run now</button></td></tr>`).join(""):'<tr><td colspan="5" class="empty">No schedules.</td></tr>';
+}
+function editSchedule(id){
+  document.getElementById("scheduleId").value=id;
+  callApiByPath("/api/schedules/"+encodeURIComponent(id),"GET").then(s=>{
+    if(!s)return;
+    document.getElementById("scheduleName").value=s.name||"";
+    document.getElementById("scheduleTime").value=s.time||"";
+    document.getElementById("scheduleRepeat").value=s.repeat||"daily";
+    document.getElementById("scheduleAudio").value=s.audio||s.file||"";
+    document.getElementById("scheduleEnabled").value=String(s.enabled!==false);
+  });
+}
+async function saveSchedule(){
+  const id=document.getElementById("scheduleId").value.trim();
+  const body={
+    name:document.getElementById("scheduleName").value,
+    time:document.getElementById("scheduleTime").value,
+    repeat:document.getElementById("scheduleRepeat").value,
+    audio:document.getElementById("scheduleAudio").value,
+    enabled:document.getElementById("scheduleEnabled").value==="true"
+  };
+  if(!body.name||!body.time){toast("Enter schedule name and time.");return;}
+  await callApiByPath(id?"/api/schedules/"+encodeURIComponent(id):"/api/schedules",id?"PUT":"POST",body);
+  loadSchedules();
+}
+function createSchedule(){
+  document.getElementById("scheduleId").value="";
+  document.getElementById("scheduleName").value="";
+  document.getElementById("scheduleTime").value="";
+  showPage("schedules");
+  document.getElementById("scheduleName").focus();
+}
+
+/* Prayer events and sequences */
+let prayers=[];
+let sequence=[];
+let dragIndex=null;
+async function loadPrayers(){
+  const data=await callApiByPath("/api/prayers","GET");
+  if(!data)return;
+  prayers=Array.isArray(data)?data:(data.prayers||[]);
+  renderPrayers();
+}
+function renderPrayers(){
+  document.getElementById("prayerCount").textContent=prayers.length;
+  document.getElementById("enabledPrayers").textContent=prayers.filter(p=>p.enabled!==false).length;
+  document.getElementById("sequenceCount").textContent=prayers.reduce((n,p)=>n+(p.audio?.length||0),0);
+  const next=prayers.filter(p=>p.enabled!==false).sort((a,b)=>(a.time||"").localeCompare(b.time||""))[0];
+  document.getElementById("nextPrayer").textContent=next?next.name||next.time:"--";
+  document.getElementById("prayerList").innerHTML=prayers.length?prayers.map(p=>`
+    <div class="api-item">
+      <div class="api-main"><strong>${escapeHtml(p.name||p.id)}</strong>
+      <span class="muted">${escapeHtml(p.time||"--")} · ${(p.audio||[]).length} audio files</span></div>
+      <div class="row wrap">
+        <button class="small" onclick="editPrayer('${escapeJs(p.id)}')">Edit</button>
+        <button class="small" onclick="openPrayerSequence('${escapeJs(p.id)}')">Audio Sequence</button>
+        <button class="small" onclick="callApiByPath('/api/prayers/${encodeURIComponent(p.id)}/audio/preview','POST',{})">Preview</button>
+      </div>
+    </div>`).join(""):"<div class='empty'>No prayer events returned by the device.</div>";
+}
+function editPrayer(id){
+  const p=prayers.find(x=>String(x.id)===String(id));
+  if(!p)return;
+  document.getElementById("prayerId").value=p.id;
+  document.getElementById("prayerName").value=p.name||"";
+  document.getElementById("prayerTime").value=p.time||"";
+  document.getElementById("prayerEnabled").value=String(p.enabled!==false);
+}
+function openPrayerSequence(id){
+  const p=prayers.find(x=>String(x.id)===String(id));
+  document.getElementById("sequencePrayerId").value=id;
+  sequence=(p?.audio||[]).map(x=>typeof x==="string"?{id:x,path:x,enabled:true}:({...x}));
+  renderSequence();
+}
+async function savePrayer(){
+  const id=document.getElementById("prayerId").value.trim();
+  const body={
+    id:id||undefined,
+    name:document.getElementById("prayerName").value,
+    time:document.getElementById("prayerTime").value,
+    enabled:document.getElementById("prayerEnabled").value==="true"
+  };
+  if(!body.name||!body.time){toast("Enter prayer name and time.");return;}
+  await callApiByPath("/api/prayers","POST",body);
+  loadPrayers();
+}
+function addSequenceAudio(){
+  const path=document.getElementById("audioToAdd").value.trim();
+  if(!path){toast("Enter an audio file path.");return;}
+  sequence.push({id:"audio_"+Date.now(),path,enabled:true});
+  document.getElementById("audioToAdd").value="";
+  renderSequence();
+}
+async function loadFilesForPrayer(){
+  await loadFiles();
+  const box=document.getElementById("sequenceFileChoices");
+  box.innerHTML=sdFiles.filter(f=>(f.type||"").toLowerCase().includes("audio")||/\.(mp3|wav|aac|flac|ogg)$/i.test(f.name||f.path||"")).map(f=>{
+    const path=f.path||f.name;
+    return `<button class="small" style="margin:4px" onclick="addFileToSequence('${escapeJs(path)}')">+ ${escapeHtml(f.name||path)}</button>`;
+  }).join("")||"<span class='muted'>No audio files found or file type not identified by the API.</span>";
+}
+function addFileToSequence(path){
+  sequence.push({id:"audio_"+Date.now()+"_"+Math.random().toString(16).slice(2,6),path,enabled:true});
+  renderSequence();
+}
+function renderSequence(){
+  const el=document.getElementById("sequenceList");
+  if(!sequence.length){el.innerHTML='<div class="empty">No audio assigned. Add one or more files.</div>';return;}
+  el.innerHTML=sequence.map((a,i)=>`
+    <div class="audio-item" draggable="true" data-index="${i}">
+      <span class="drag-handle">⠿</span><span class="audio-number">${i+1}</span>
+      <div class="audio-name"><strong>${escapeHtml(a.path||a.id)}</strong><div class="muted" style="font-size:11px">${a.enabled===false?"Disabled":"Enabled"}</div></div>
+      <button class="small" onclick="moveSequence(${i},-1)">↑</button>
+      <button class="small" onclick="moveSequence(${i},1)">↓</button>
+      <button class="small" onclick="toggleSequence(${i})">${a.enabled===false?"Enable":"Disable"}</button>
+      <button class="small danger" onclick="removeSequence(${i})">Remove</button>
+    </div>`).join("");
+  el.querySelectorAll(".audio-item").forEach(item=>{
+    item.addEventListener("dragstart",e=>{
+      dragIndex=Number(item.dataset.index);
+      item.classList.add("dragging");
+      e.dataTransfer.effectAllowed="move";
+    });
+    item.addEventListener("dragend",()=>item.classList.remove("dragging"));
+    item.addEventListener("dragover",e=>e.preventDefault());
+    item.addEventListener("drop",e=>{
+      e.preventDefault();
+      const target=Number(item.dataset.index);
+      if(dragIndex===null||dragIndex===target)return;
+      const moved=sequence.splice(dragIndex,1)[0];
+      sequence.splice(target,0,moved);
+      dragIndex=null;renderSequence();
+    });
+  });
+}
+function moveSequence(i,dir){
+  const j=i+dir;
+  if(j<0||j>=sequence.length)return;
+  [sequence[i],sequence[j]]=[sequence[j],sequence[i]];
+  renderSequence();
+}
+function toggleSequence(i){sequence[i].enabled=sequence[i].enabled===false;renderSequence();}
+function removeSequence(i){sequence.splice(i,1);renderSequence();}
+async function saveSequence(){
+  const id=document.getElementById("sequencePrayerId").value.trim();
+  if(!id){toast("Enter or select a prayer ID.");return;}
+  const body={
+    audio:sequence.map((a,i)=>({id:a.id,path:a.path,order:i+1,enabled:a.enabled!==false})),
+    settings:{
+      mode:document.getElementById("sequenceMode").value,
+      delay_ms:Number(document.getElementById("sequenceDelay").value||0),
+      stop_after_sequence:document.getElementById("stopAfterSequence").value==="true"
+    }
+  };
+  const result=await callApiByPath("/api/prayers/"+encodeURIComponent(id)+"/audio","PUT",body);
+  if(result)toast("Sequence sent to ESP32. Confirm its response indicates it was saved.");
+}
+async function previewSequence(){
+  const id=document.getElementById("sequencePrayerId").value.trim();
+  if(!id){toast("Enter a prayer ID.");return;}
+  await callApiByPath("/api/prayers/"+encodeURIComponent(id)+"/audio/preview","POST",{});
+}
+
+/* Scheduler */
+async function loadScheduler(){
+  const results=await Promise.allSettled([
+    requestApi("/api/scheduler/status"),
+    requestApi("/api/scheduler/clock"),
+    requestApi("/api/scheduler/missed"),
+    requestApi("/api/schedules/next"),
+    requestApi("/api/schedules/history")
+  ]);
+  if(results[0].status==="fulfilled")document.getElementById("schedulerState").textContent=JSON.stringify(results[0].value.data);
+  if(results[1].status==="fulfilled")document.getElementById("schedulerClock").textContent=JSON.stringify(results[1].value.data);
+  if(results[2].status==="fulfilled")document.getElementById("missedEvents").textContent=JSON.stringify(results[2].value.data);
+  if(results[3].status==="fulfilled")document.getElementById("schedulerNext").textContent=JSON.stringify(results[3].value.data);
+  if(results[4].status==="fulfilled")document.getElementById("schedulerHistory").textContent=JSON.stringify(results[4].value.data,null,2);
+}
+
+/* Amplifier, logs, backup, settings */
+async function loadLogs(path="/api/logs"){
+  const d=await callApiByPath(path,"GET");
+  if(d)document.getElementById("logsOutput").textContent=JSON.stringify(d,null,2);
+}
+async function restoreBackup(){
+  const id=document.getElementById("restoreId").value.trim();
+  if(!id){toast("Enter backup ID.");return;}
+  if(!confirm("Restore this backup?"))return;
+  const d=await callApiByPath("/api/backup/restore","POST",{backup_id:id});
+  if(d)document.getElementById("backupOutput").textContent=JSON.stringify(d,null,2);
+}
+async function setDeviceTime(){
+  const value=document.getElementById("deviceTime").value;
+  if(!value){toast("Choose date and time.");return;}
+  await callApiByPath("/api/time","POST",{datetime:value});
+}
+async function restartDevice(){
+  if(!confirm("Restart the ESP32? Playback may stop."))return;
+  await callApiByPath("/api/restart","POST",{});
+}
+
+/* API documentation */
+function initApiPage(){
+  const modules=[...new Set(APIs.map(a=>a.module))];
+  document.getElementById("apiModule").innerHTML='<option value="">All modules</option>'+modules.map(m=>`<option>${escapeHtml(m)}</option>`).join("");
+  document.getElementById("apiTotal").textContent=APIs.length;
+  document.getElementById("apiGet").textContent=APIs.filter(a=>a.method==="GET").length;
+  document.getElementById("apiPost").textContent=APIs.filter(a=>a.method==="POST").length;
+  document.getElementById("apiOther").textContent=APIs.filter(a=>["PUT","DELETE"].includes(a.method)).length;
+  renderApis();
+}
+function renderApis(){
+  const q=(document.getElementById("apiSearch").value||"").toLowerCase();
+  const mod=document.getElementById("apiModule").value;
+  const method=document.getElementById("apiMethod").value;
+  const status=document.getElementById("apiStatus").value;
+  const filtered=APIs.filter(a=>
+    (!q||[a.module,a.name,a.path,a.description].join(" ").toLowerCase().includes(q))&&
+    (!mod||a.module===mod)&&(!method||a.method===method)&&(!status||a.status===status)
+  );
+  document.getElementById("apiResultCount").textContent=filtered.length+" endpoints";
+  document.getElementById("apiList").innerHTML=filtered.length?filtered.map(a=>`
+    <div class="api-item" onclick="openApiModal(${a.id})">
+      <div class="api-main">
+        <strong>${escapeHtml(a.name)}</strong>
+        <span class="api-path">${escapeHtml(a.path)}</span>
+        <div style="margin-top:7px"><span class="muted">${escapeHtml(a.module)}</span> · <span class="badge">${a.priority}</span> <span class="badge yellow">${a.status}</span></div>
+      </div>
+      <span class="method ${a.method}">${a.method}</span>
+    </div>`).join(""):'<div class="empty">No matching APIs.</div>';
+}
+function sampleRequest(api){
+  const p=api.path;
+  if(p.includes("/audio/reorder"))return {audio_order:["audio_003","audio_001","audio_002"]};
+  if(p.includes("/prayers/")&&p.endsWith("/audio"))return {audio:[{id:"audio_001",path:"/audio/opening.mp3",order:1,enabled:true},{id:"audio_002",path:"/audio/prayer.mp3",order:2,enabled:true}],settings:{mode:"sequential",delay_ms:1000}};
+  if(p.includes("/audio/volume"))return {volume:70};
+  if(p.includes("/audio/play"))return {file:"/audio/announcement.mp3"};
+  if(p.includes("/display/text"))return {line1:"Temple Audio",line2:"System Ready"};
+  if(p.includes("/time"))return {datetime:"2026-11-23T06:00:00"};
+  if(p.includes("/files/delete"))return {path:"/audio/old.mp3"};
+  if(p.includes("/schedules"))return {name:"Morning announcement",time:"06:00",repeat:"daily",enabled:true,audio:"/audio/morning.mp3"};
+  if(p.includes("/prayers"))return {id:"morning",name:"Morning prayer",time:"06:00",enabled:true};
+  if(p.includes("/network/config"))return {ssid:"TempleWiFi",password:"YOUR_WIFI_PASSWORD"};
+  if(p.includes("/auth/login"))return {username:"admin",password:"YOUR_PASSWORD"};
+  if(p.includes("/backup/restore"))return {backup_id:"backup_001"};
+  if(api.method==="POST"||api.method==="PUT")return {enabled:true};
+  return null;
+}
+function sampleResponse(api){
+  return {
+    success:true,
+    message:api.name+" completed",
+    data:{id:"example_001",status:"ok"},
+    note:"Illustrative example only. Actual firmware response may differ."
+  };
+}
+function openApiModal(id){
+  const a=APIs.find(x=>x.id===id);if(!a)return;
+  document.getElementById("modalMethod").innerHTML=`<span class="method ${a.method}">${a.method}</span><span class="badge">${escapeHtml(a.module)}</span><span class="badge yellow">${a.status}</span>`;
+  document.getElementById("modalTitle").textContent=a.name;
+  document.getElementById("modalPath").textContent=a.path;
+  const request=sampleRequest(a);
+  const needsBody=["POST","PUT","DELETE"].includes(a.method);
+  const params=a.path.match(/\{[^}]+\}/g)||[];
+  document.getElementById("modalBody").innerHTML=`
+    <div class="modal-section"><h4>DESCRIPTION</h4><p>${escapeHtml(a.description)}.</p><p class="muted">Priority: ${a.priority}. Module: ${escapeHtml(a.module)}.</p></div>
+    <div class="modal-section"><h4>FUNCTION / HOW IT WORKS</h4><p>This endpoint is intended to ${escapeHtml(a.description.toLowerCase())}. The ESP32 firmware must validate the request, perform the operation, and return a structured response. The dashboard displays the result.</p></div>
+    <div class="modal-section"><h4>PATH PARAMETERS</h4><pre>${params.length?params.map(x=>x+" : replace with the actual ID").join("\\n"):"No path parameters."}</pre></div>
+    <div class="modal-section"><h4>REQUEST BODY EXAMPLE</h4><pre id="modalRequest">${request?escapeHtml(JSON.stringify(request,null,2)):"No request body for this example."}</pre>
+    ${request ? "<button class=\"small\" onclick=\"copyElementText('modalRequest')\">Copy request JSON</button>" : ""}Copy request JSON</button>':""}</div>
+    <div class="modal-section"><h4>EXPECTED RESPONSE EXAMPLE</h4><pre id="modalResponse">${escapeHtml(JSON.stringify(sampleResponse(a),null,2))}</pre><button class="small" onclick="copyElementText('modalResponse')">Copy response JSON</button></div>
+    <div class="modal-section"><h4>ERROR RESPONSES TO HANDLE</h4><pre>400 Bad Request - Invalid input or missing parameters
+401 Unauthorized - Authentication required
+404 Not Found - Resource does not exist
+409 Conflict - Operation conflicts with current state
+500 Internal Server Error - Device operation failed
+503 Service Unavailable - Hardware or storage unavailable</pre></div>
+    <div class="modal-section"><h4>STORAGE & HARDWARE</h4><p>${storageDescription(a)}</p></div>
+    <div class="modal-section"><h4>IMPLEMENTATION STATUS</h4>
+      <select id="modalApiStatus" onchange="updateApiStatus(${a.id},this.value)">
+        <option ${a.status==="Planned"?"selected":""}>Planned</option>
+        <option ${a.status==="Implemented"?"selected":""}>Implemented</option>
+        <option ${a.status==="Tested"?"selected":""}>Tested</option>
+      </select>
+      <p class="muted">This status is currently saved in this browser's local storage, not on the ESP32.</p>
+    </div>
+    <div class="modal-section row wrap">
+      <button class="primary" onclick="tryApi(${a.id})">Try API</button>
+      <button onclick="copyText('${escapeJs(a.method+" "+a.path)}')">Copy endpoint</button>
+      <button onclick="closeModal()">Close</button>
+    </div>
+    <div class="modal-section"><h4>LIVE API RESULT</h4><pre id="apiTryResult">No request executed yet.</pre></div>
+  `;
+  document.getElementById("apiModal").classList.add("open");
+}
+function storageDescription(a){
+  if(a.module.includes("Prayer")||a.module==="Schedules"||a.module==="Playlists"||a.module==="Configuration"||a.module==="Backup & Restore"||a.module==="Scheduler Reliability")return "Persistent storage is required. Schedule definitions, audio ordering and execution records should be saved on microSD and reloaded after reboot.";
+  if(a.module==="MicroSD & Files")return "Operates on the microSD card. File operations must validate paths and available storage.";
+  if(a.module==="Audio Playback")return "Requires a functioning audio playback driver and compatible audio hardware.";
+  if(a.module==="Amplifier")return "Depends on the actual amplifier hardware and supported control interface.";
+  if(a.module==="LCD Display")return "Depends on the connected display and its actual interface.";
+  return "Depends on ESP32 firmware implementation and available device capabilities.";
+}
+function updateApiStatus(id,status){
+  const a=APIs.find(x=>x.id===id);if(!a)return;
+  a.status=status;
+  localStorage.setItem("temple_api_status",JSON.stringify(APIs.map(x=>[x.id,x.status])));
+  renderApis();toast("API status updated in this browser.");
+}
+async function tryApi(id){
+  const a=APIs.find(x=>x.id===id);if(!a)return;
+  const result=document.getElementById("apiTryResult");
+  result.textContent="Sending request...";
+  let path=a.path;
+  const params=path.match(/\{[^}]+\}/g)||[];
+  for(const param of params){
+    const value=prompt("Enter value for "+param);
+    if(value===null){result.textContent="Cancelled.";return;}
+    path=path.replace(param,encodeURIComponent(value));
+  }
+  let body=sampleRequest(a);
+  if(["POST","PUT"].includes(a.method)){
+    const edit=prompt("Edit request JSON if required:",JSON.stringify(body||{},null,2));
+    if(edit===null){result.textContent="Cancelled.";return;}
+    try{body=JSON.parse(edit);}catch(e){result.textContent="Invalid JSON: "+e.message;return;}
+  }else body=null;
+  try{
+    const r=await requestApi(path,a.method,body);
+    result.textContent="HTTP "+r.status+"\n\n"+JSON.stringify(r.data,null,2);
+    if(a.status==="Planned")toast("Request worked. Confirm the endpoint before marking it tested.");
+  }catch(e){result.textContent="Request failed:\n"+e.message;}
+}
+function closeModal(){document.getElementById("apiModal").classList.remove("open");}
+function copyText(t){navigator.clipboard?.writeText(t);toast("Copied.");}
+function copyElementText(id){copyText(document.getElementById(id).textContent);}
+function exportApiCatalogue(){
+  const header=["Module","Method","Endpoint","Function","Description","Priority","Status"];
+  const rows=APIs.map(a=>[a.module,a.method,a.path,a.name,a.description,a.priority,a.status]);
+  const csv=[header,...rows].map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download="Temple_Audio_API_Catalogue.csv";a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* Utilities */
+function escapeHtml(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function escapeJs(s){return String(s??"").replace(/\\/g,"\\\\").replace(/'/g,"\\'");}
+function formatBytes(bytes){
+  if(!bytes)return "—";
+  const units=["B","KB","MB","GB"];
+  let i=0,n=Number(bytes);
+  while(n>=1024&&i<3){n/=1024;i++;}
+  return n.toFixed(1)+" "+units[i];
+}
+
+/* Restore API statuses saved in this browser */
+try{
+  const saved=JSON.parse(localStorage.getItem("temple_api_status")||"[]");
+  saved.forEach(([id,status])=>{const a=APIs.find(x=>x.id===id);if(a)a.status=status;});
+}catch(e){}
+
+/* Start dashboard */
+initApiPage();
+setConnection(false);
+</script>
+</body>
+</html>
